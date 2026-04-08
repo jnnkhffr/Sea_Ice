@@ -12,7 +12,7 @@ K_snow = 0.3 # he a t c o n d u c ti vi t y o f snow [W/ (m K) ]
 SEC_PER_DAY = 86400 # How many s e c o n d s i n one day
 H_ice_initial = 0.1 # in meters
 Q_ocean = 5  # W/m Ocean heat flux pos= Wärme aus Ocean nach oben
-
+H_snow = 0.05
 
 h_ice = np.zeros(DAYS)
 h_ice[0] = H_ice_initial
@@ -77,3 +77,30 @@ plt.legend()
 plt.show()
 
 print("Enddicke nach 30 Tagen (mit 5 W/m²):", h_ice[-1], "m")
+
+
+# mit schnee
+# --- Numerische Lösung ---
+h_ice = np.zeros(DAYS)
+h_ice[0] = H_ice_initial
+
+for day in range(1, DAYS):
+    h_prev = h_ice[day - 1]
+
+    R_tot = h_prev / K_ice + H_snow / K_snow
+    Q_cond = (Tbot - Tsurf) / R_tot  # W/m²
+
+    Q_net = Q_cond - Q_ocean
+
+    dh = (Q_net / (RHO * L)) * SEC_PER_DAY
+    h_ice[day] = h_prev + dh
+
+plt.figure(figsize=(8, 5))
+plt.plot(h_ice, marker="o")
+plt.xlabel("Tage")
+plt.ylabel("Eisdicke (m)")
+plt.title(f"Eisdickenentwicklung mit Schnee (H_snow = {H_snow} m)")
+plt.grid(True)
+plt.show()
+
+print("Enddicke nach 30 Tagen:", h_ice[-1], "m")
