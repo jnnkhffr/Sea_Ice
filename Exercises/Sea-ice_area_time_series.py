@@ -1,5 +1,6 @@
 import pandas as pd
 import matplotlib.pyplot as plt
+import numpy as np
 
 
 
@@ -108,4 +109,154 @@ plt.show()
 
 
 ##########
-#Exercise 3
+#EXERCISE 3
+#3.2
+
+
+emissions = pd.read_excel(
+    "C:/Users\janni\Desktop\Studium\Master\Sea Ice\Exercises\Global_Carbon_Budget_2025_v0.6.xlsx",
+    sheet_name="Fossil Emissions by Category",
+    header=8,
+    index_col=0
+)
+
+# Kumulative CO2-Emissionen (in GtCO2) berechnen
+cum_emissions = emissions["fossil.emissions.excluding.carbonation"].cumsum() * 3.67
+
+# -> Warum der Faktor 3.67?
+# Die Emissionen sind meist in GtC (Gigatonnen Kohlenstoff) angegeben.
+
+# Massenverhältnis = M CO2 / M C = 44/12 ≈ 3,67
+
+# Also: aus Kohlenstoffmasse → CO₂-Masse. (siehe Tabellen header)
+
+
+#Die September-Meereseis-Daten gehen z.B. von 1979–2024. Also schneiden wir die kumulativen Emissionen auf denselben
+# Zeitraum zu:
+cum_emissions = cum_emissions.loc[1979:2024]
+
+#September Meereisfläche:
+# Mittel über alle Algorithmen pro Jahr (September)
+sia_sep_mean = sia_obs_Sep.mean(axis=1)
+sia_sep_mean = sia_sep_mean.loc[1979:2024]
+
+x = cum_emissions.loc[sia_sep_mean.index]
+y = sia_sep_mean
+
+slope, intercept = np.polyfit(x, y, 1)
+
+print("Steigung (slope):", slope, "Million km² pro GtCO₂")
+print("Achsenabschnitt (intercept):", intercept, "Million km²")
+loss_per_ton = slope / 1e9
+print("Verlust an September-Meereis pro Tonne CO₂:", loss_per_ton, "Million km² pro Tonne CO₂")
+# Verlust pro Tonne CO2 in km²
+loss_per_ton_km2 = loss_per_ton * 1e6
+print("Verlust pro Tonne CO2:", loss_per_ton_km2, "km² pro Tonne CO2 -> -27 cm^2 pro Tonne CO2")
+
+
+target_sia = 1.0  # Million km²
+cum_emissions_threshold = (target_sia - intercept) / slope
+print("Kumulative Emissionen für 1 Mio km²:", cum_emissions_threshold, "GtCO₂")
+
+
+# Jahr finden, in dem die kumulativen Emissionen den Schwellenwert überschreiten
+# grobe Extrapolation
+current_cum = cum_emissions.iloc[-1]
+remaining = cum_emissions_threshold - current_cum
+# z.B. mittlere jährliche Emissionen der letzten 5 Jahre
+recent_mean_annual = emissions["fossil.emissions.excluding.carbonation"].iloc[-5:].mean() * 3.67
+years_to_threshold = remaining / recent_mean_annual
+year_estimate = cum_emissions.index[-1] + years_to_threshold
+print("Geschätztes Jahr für praktisch eisfrei (linear, mit aktuellen Emissionen):", year_estimate)
+
+
+
+
+
+#Exercise 3.3
+
+#Text Datei als csv
+df = pd.read_csv(
+    r"C:\Users\janni\Desktop\Studium\Master\Sea Ice\Exercises\annual_global_temperature_anomalies.txt",
+    delim_whitespace=True,
+    header=None
+)
+
+df.to_csv(
+    r"C:\Users\janni\Desktop\Studium\Master\Sea Ice\Exercises\annual_global_temperature_anomalies.csv",
+    index=False
+)
+
+
+rows = []
+
+with open("C:/Users\janni\Desktop\Studium\Master\Sea Ice\Exercises/annual_global_temperature_anomalies.csv", "r") as f:
+    for line in f:
+        line = line.strip()
+
+        # Kommentarzeilen überspringen
+        if line.startswith("%") or line == "":
+            continue
+
+        # Zeile in Werte splitten (Komma-getrennt)
+        parts = line.split(",")
+
+        # Nur Zeilen behalten, die mit einer Jahreszahl beginnen
+        if parts[0].isdigit():
+            rows.append(parts)
+
+df = pd.DataFrame(rows)
+
+df = df[[0, 1]]
+df.columns = ["Year", "Annual Anomaly"]
+
+# In Zahlen umwandeln
+df["Year"] = df["Year"].astype(int)
+df["Annual Anomaly"] = pd.to_numeric(df["Annual Anomaly"], errors="coerce")
+
+# Index setzen
+df = df.set_index("Year")
+
+print(df.head())
+
+
+# Temperaturdaten liegen jetzt in df
+# -> Zeile mit Year = 0 entfernen
+df = df[df.index != 0]
+
+# Zeitraum 1979–2024 auswählen
+temp = df.loc[1979:2024]
+
+# September-Meereseis-Mittelwerte
+sia_sep_mean = sia_obs_Sep.mean(axis=1)
+sia_sep_mean = sia_sep_mean.loc[1979:2024]
+
+# Regression vorbereiten
+x = temp["Annual Anomaly"]          # Temperatur (°C)
+y = sia_sep_mean                    # Sea Ice (Million km²)
+
+# Lineare Regression
+slope_T, intercept_T = np.polyfit(x, y, 1)
+
+print("Steigung:", slope_T, "Million km² pro °C")
+print("Achsenabschnitt:", intercept_T)
+
+# Verlust pro °C in km²
+loss_per_deg_km2 = slope_T * 1e6
+print("Verlust pro °C:", loss_per_deg_km2, "km² pro °C")
+
+# Schwelle für praktisch eisfrei (1 Mio km²)
+target_sia = 1.0  # 1 Million km²
+warming_threshold = (target_sia - intercept_T) / slope_T
+print(f"Warming-Level für 1 Mio km²: {warming_threshold:.2f}, °C über 1951–1980")
+
+# Umrechnung auf 1850–1900 (IPCC: +0.85°C)
+warming_threshold_preindustrial = warming_threshold + 0.85
+print(f"Warming-Level relativ zu 1850–1900: {warming_threshold_preindustrial:.2f} °C")
+
+# Heutiges Warming-Level (2024)
+current_temp_1951_1980 = temp.loc[2024, "Annual Anomaly"]
+current_temp_preindustrial = current_temp_1951_1980 + 0.85
+print(f"Heutiges Warming-Level (2024): {current_temp_preindustrial:.2f}, °C über 1850–1900")
+
+
