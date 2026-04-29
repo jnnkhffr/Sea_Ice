@@ -36,7 +36,8 @@ plt.show()
 #2.2
 
 H =0.5 #ice thickness
-Tbot = -1.8 + 273.15 #bottom Temperature in Kelvin
+Kelvin = 273.15
+Tbot = -1.8 + Kelvin #bottom Temperature in Kelvin
 K =2.2 #thermische conductivity of ice
 SIGMA = 5.67e-8 #Stefan Boltzmann constante'
 EPS = 0.95 #emissivity
@@ -77,3 +78,16 @@ for i, day in enumerate(days):
         Tphys = 273.15
 
     Ttop[i] = Tphys
+
+#Plots:
+plt.figure(figsize=(10, 5))
+plt.plot(days, Ttop, color="red", label="Surface temperature $T_{top}$")
+plt.axhline(273.15, color="gray", linestyle="--", label="Melting point (273 K)")
+
+plt.xlabel("Day of Year")
+plt.ylabel("Surface Temperature [K]")
+plt.title("Seasonal Cycle of Sea Ice Surface Temperature")
+plt.grid(True)
+plt.legend()
+plt.tight_layout()
+plt.show()
