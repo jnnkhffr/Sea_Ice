@@ -104,3 +104,38 @@ plt.grid(True)
 plt.show()
 
 print("Enddicke nach 30 Tagen:", h_ice[-1], "m")
+
+# Gemeinsamer Plot: ohne Schnee vs. mit Schnee
+
+# 1) Numerische Lösung ohne Schnee erneut berechnen
+h_ice_no_snow = np.zeros(DAYS)
+h_ice_no_snow[0] = H_ice_initial
+
+for day in range(1, DAYS):
+    h_prev = h_ice_no_snow[day - 1]
+    Q_cond = K_ice * (Tbot - Tsurf) / h_prev
+    dh = (Q_cond / (RHO * L)) * SEC_PER_DAY
+    h_ice_no_snow[day] = h_prev + dh
+
+# 2) Numerische Lösung mit Schnee (h_ice hast du schon berechnet)
+h_ice_with_snow = h_ice.copy()
+
+plt.figure(figsize=(8, 5))
+plt.plot(h_ice_no_snow, label="without snow")#, marker="o")
+plt.plot(h_ice_with_snow, label=f"with snow (snow height = {H_snow} m)")#, marker="s")
+
+# Endwerte markieren
+plt.scatter(DAYS-1, h_ice_no_snow[-1], color="blue")
+plt.scatter(DAYS-1, h_ice_with_snow[-1], color="orange")
+
+plt.text(DAYS-1 -1.5, h_ice_no_snow[-1] - 0.04,
+         f"{h_ice_no_snow[-1]:.3f} m", color="blue", fontsize=10)
+plt.text(DAYS-1 -1.5, h_ice_with_snow[-1] -0.04,
+         f"{h_ice_with_snow[-1]:.3f} m", color="orange", fontsize=10)
+
+plt.xlabel("Days")
+plt.ylabel("Ice thickness (m)")
+plt.title("Ice Thickness Development: Comparison with and without Snow")
+plt.grid(True)
+plt.legend()
+plt.show()
