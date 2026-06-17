@@ -1,6 +1,6 @@
 import xarray as xr
 import matplotlib.pyplot as plt
-
+#exercise 10.06.2026
 
 files = {
     "MPI-LR": ("C:/Users/janni/Desktop/Studium/Master/Sea Ice/Exercises/MPI-ESM1-2-LR_nh_all_fv0.03.nc",
